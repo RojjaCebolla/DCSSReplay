@@ -205,8 +205,6 @@ namespace FrameGenerator
                 DrawMonsterDisplay(g, model, overrides);
 
                 DrawLogs(g, model);
-
-                DrawConsole(g, model);
             }
 
             return newFrame;
