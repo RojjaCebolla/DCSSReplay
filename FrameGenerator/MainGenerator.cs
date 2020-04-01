@@ -210,29 +210,6 @@ namespace FrameGenerator
             return newFrame;
         }
 
-        private void DrawConsole(Graphics g, Model model)
-        {
-            float currentTileY = 468;
-            float currentTileX = 1075;
-            var font2 = new Font("Courier New", 16);
-
-            for (var i = 0; i < model.TileNames.Length; i++)
-            {
-               
-                if (i % model.LineLength == 0)
-                {
-                    currentTileX = 1000;
-                    currentTileY += 17;
-                }       
-                else  currentTileX += 17;
-
-                g.WriteCharacter(model.TileNames[i], font2, currentTileX, currentTileY, model.HighlightColors[i]);
-
-
-            }
-        }
-   
-
         private void DrawMonsterDisplay(Graphics g, Model model, Dictionary<string, string> overrides)
         {
             
