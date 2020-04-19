@@ -249,7 +249,7 @@ namespace TtyRecMonkey
                 case Keys.D: PlaybackSpeed -= 0.2; break;//progresive increase/decrease
                 case Keys.H: PlaybackSpeed += 0.2; break;
 
-                case Keys.Oemcomma: 
+                case Keys.Oemcomma:
                     if (PlaybackSpeed != 0) { PausedSpeed = PlaybackSpeed; PlaybackSpeed = 0; } //pause when frame stepping
                     FrameStepCount -= 1;//FrameStep -1 
                     break;
@@ -268,12 +268,19 @@ namespace TtyRecMonkey
                     ConsoleSwitchLevel = ConsoleSwitchLevel != 3 ? 3 : 1;//switch to full console mode ound when in normal layout mode
                     break;
 
+                case Keys.F | Keys.Control:
+                    foreach (var result in ttyrecDecoder.SearchPackets("corr", 5))
+                    {
+                        Console.WriteLine(result);
+                    } break;
                 case Keys.V://Play / Pause
                 case Keys.Space:
                     if (PlaybackSpeed != 0) { PausedSpeed = PlaybackSpeed; PlaybackSpeed = 0; }
                     else { PlaybackSpeed = PausedSpeed; }
                     break;
             }
+            
+            
             base.OnKeyDown(e);
         }
 
