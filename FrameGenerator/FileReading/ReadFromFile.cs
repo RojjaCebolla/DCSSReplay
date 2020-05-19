@@ -1,8 +1,11 @@
 ﻿using FrameGenerator.Models;
 using System.Collections.Generic;
 using SkiaSharp;
+using System;
+using System.Net;
 using System.IO;
-using System.Linq;
+using ICSharpCode.SharpZipLib.Zip;
+using System.Text;
 
 namespace FrameGenerator.FileReading
 {
@@ -11,9 +14,13 @@ namespace FrameGenerator.FileReading
         public static Dictionary<string, string> GetDictionaryFromFile(string path)
         {
             var dict = new Dictionary<string, string>();
-            
-            string[] lines = File.ReadAllLines(path);
-
+            var textFromFile = (new WebClient()).DownloadString(path);
+            byte[] bytes = Encoding.Default.GetBytes(textFromFile);
+            textFromFile = Encoding.UTF8.GetString(bytes);
+            string[] lines = textFromFile.Split(
+    new[] { "\r\n", "\r", "\n" },
+    StringSplitOptions.None);
+           
             for (var i = 0; i < lines.Length; i += 2)
             {
                 dict[lines[i]] = lines[i + 1];
@@ -25,7 +32,12 @@ namespace FrameGenerator.FileReading
         {
             var monster = new Dictionary<string, string>();
 
-            string[] lines = File.ReadAllLines(file);
+            var textFromFile = (new WebClient()).DownloadString(file);
+            byte[] bytes = Encoding.Default.GetBytes(textFromFile);
+            textFromFile = Encoding.UTF8.GetString(bytes);
+            string[] lines = textFromFile.Split(
+    new[] { "\r\n", "\r", "\n" },
+    StringSplitOptions.None);
 
             for (var i = 0; i < lines.Length; i++)
             {
@@ -46,7 +58,12 @@ namespace FrameGenerator.FileReading
 
             //Overrides for duplicates, others handled by name from monster log
 
-            lines = File.ReadAllLines(monsterOverrideFile);
+            textFromFile = (new WebClient()).DownloadString(monsterOverrideFile);
+            bytes = Encoding.Default.GetBytes(textFromFile);
+            textFromFile = Encoding.UTF8.GetString(bytes);
+            lines = textFromFile.Split(
+    new[] { "\r\n", "\r", "\n" },
+    StringSplitOptions.None);
 
             foreach (var line in lines)
             {
@@ -75,7 +92,12 @@ namespace FrameGenerator.FileReading
         {
             var monster = new List<NamedMonsterOverride>();
 
-            string[] lines = File.ReadAllLines(monsterOverrideFile);
+            var textFromFile = (new WebClient()).DownloadString(monsterOverrideFile);
+            byte[] bytes = Encoding.Default.GetBytes(textFromFile);
+            textFromFile = Encoding.UTF8.GetString(bytes);
+            string[] lines = textFromFile.Split(
+    new[] { "\r\n", "\r", "\n" },
+    StringSplitOptions.None);
 
             var name = "";
             var location = "";
@@ -116,8 +138,12 @@ namespace FrameGenerator.FileReading
         {
 
             var floorandwall = new Dictionary<string, string[]>();
-            string[] lines = File.ReadAllLines(file);
-
+            var textFromFile = (new WebClient()).DownloadString(file);
+            byte[] bytes = Encoding.Default.GetBytes(textFromFile);
+            textFromFile = Encoding.UTF8.GetString(bytes);
+            string[] lines = textFromFile.Split(
+new[] { "\r\n", "\r", "\n" },
+StringSplitOptions.None);
             for (var i = 0; i < lines.Length; i += 3)
             {
                 string[] temp = new string[2];
@@ -131,69 +157,132 @@ namespace FrameGenerator.FileReading
 
         public static Dictionary<string, SKBitmap> GetSKBitmapDictionaryFromFolder(string folder)
         {
+
+            //byte[] zipEntryStream = null;
             var dict = new Dictionary<string, SKBitmap>();
-            List<string> pngFiles = Directory.GetFiles(folder, "*.png*", SearchOption.AllDirectories).ToList();
-            var files = Directory.GetFiles(folder, "*.png", SearchOption.TopDirectoryOnly).ToList();
-            pngFiles.AddRange(files);
-            foreach (var file in pngFiles)
+            var st = new MemoryStream(new WebClient().DownloadData(folder));
+            SKBitmap SKBitmap;
+            using (ZipFile archive = new ZipFile(st))
             {
-                FileInfo info = new FileInfo(file);
-                SKBitmap SKBitmap = SKBitmap.Decode(file);
-                dict[info.Name.Replace(".png", "")] = SKBitmap;
+                foreach (ZipEntry entry in archive)
+                {
+                    string name = entry.Name;
+                    var zipEntryStream = archive.GetInputStream(entry);
+                    using (MemoryStream s = new MemoryStream())
+                    {
+                        zipEntryStream.CopyTo(s);
+                        byte[] arr = ToByteArray(s);
+
+                        SKBitmap = SKBitmap.Decode(arr);
+                        dict[name.Replace(".png", "")] = SKBitmap;
+                    }
+
+
+                }
+                return dict;
             }
-            return dict;
+        }
+        
+
+        public static byte[] ToByteArray(MemoryStream stream)
+        {
+            stream.Position = 0;
+            byte[] buffer = new byte[stream.Length];
+            for (int totalBytesCopied = 0; totalBytesCopied < stream.Length;)
+                totalBytesCopied += stream.Read(buffer, totalBytesCopied, Convert.ToInt32(stream.Length) - totalBytesCopied);
+            return buffer;
+        }
+        public static byte[] ReadFully(Stream input)
+        {
+            byte[] buffer = new byte[16 * 1024];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                int read;
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    ms.Write(buffer, 0, read);
+                }
+                return ms.ToArray();
+            }
         }
 
         public static Dictionary<string, SKBitmap> GetCharacterPNG(string gameLocation)
         {
 
-            var GetCharacterPNG = new Dictionary<string, SKBitmap>();
-
-            List<string> allpngfiles = Directory.GetFiles(gameLocation + @"/rltiles/player/base", "*.png*", SearchOption.AllDirectories).ToList();
-            allpngfiles.AddRange(Directory.GetFiles(gameLocation + @"/rltiles/player/felids", "*.png*", SearchOption.AllDirectories).ToList());
-            foreach (var file in allpngfiles)
+            var dict = new Dictionary<string, SKBitmap>();
+            var st = new MemoryStream(new WebClient().DownloadData(gameLocation));
+            SKBitmap SKBitmap;
+            using (ZipFile archive = new ZipFile(st))
             {
-                FileInfo info = new FileInfo(file);
-                SKBitmap SKBitmap = SKBitmap.Decode(file);
+                foreach (ZipEntry entry in archive)
+                {
+                    string name = entry.Name;
+                    var zipEntryStream = archive.GetInputStream(entry);
+                    using (MemoryStream s = new MemoryStream())
+                    {
+                        zipEntryStream.CopyTo(s);
+                        byte[] arr = ToByteArray(s);
+
+                        SKBitmap = SKBitmap.Decode(arr);
+                        dict[name.Replace(".png", "")] = SKBitmap;
+                    }
 
 
-                GetCharacterPNG[info.Name.Replace(".png", "")] = SKBitmap;
-
+                }
+                return dict;
             }
-            return GetCharacterPNG;
         }
 
         public static Dictionary<string, SKBitmap> GetMonsterPNG(string gameLocation)
         {
 
-            var monsterPNG = new Dictionary<string, SKBitmap>();
-            string[] allpngfiles = Directory.GetFiles(gameLocation + @"/rltiles/mon", "*.png*", SearchOption.AllDirectories);
-            foreach (var file in allpngfiles)
-            {
-                FileInfo info = new FileInfo(file);
-                SKBitmap SKBitmap = SKBitmap.Decode(file);
-                monsterPNG[info.Name.Replace(".png", "")] = SKBitmap;
 
+            var dict = new Dictionary<string, SKBitmap>();
+            var st = new MemoryStream(new WebClient().DownloadData(gameLocation));
+            SKBitmap SKBitmap;
+            using (ZipFile archive = new ZipFile(st))
+            {
+                foreach (ZipEntry entry in archive)
+                {
+                    string name = entry.Name;
+                    var zipEntryStream = archive.GetInputStream(entry);
+                    using (MemoryStream s = new MemoryStream())
+                    {
+                        zipEntryStream.CopyTo(s);
+                        byte[] arr = ToByteArray(s);
+
+                        SKBitmap = SKBitmap.Decode(arr);
+                        dict[name.Replace(".png", "")] = SKBitmap;
+                    }
+                }
+                return dict;
             }
-            return monsterPNG;
         }
         public static Dictionary<string, SKBitmap> GetWeaponPNG(string gameLocation)
         {
 
-            var GetWeaponPNG = new Dictionary<string, SKBitmap>();
 
-            List<string> allpngfiles = Directory.GetFiles(gameLocation + @"/rltiles/player/hand1", "*.png*", SearchOption.AllDirectories).ToList();
-            allpngfiles.AddRange(Directory.GetFiles(gameLocation + @"/rltiles/player/transform", "*.png*", SearchOption.AllDirectories).ToList());
-            foreach (var file in allpngfiles)
+            var dict = new Dictionary<string, SKBitmap>();
+            var st = new MemoryStream(new WebClient().DownloadData(gameLocation));
+            SKBitmap SKBitmap;
+            using (ZipFile archive = new ZipFile(st))
             {
-                FileInfo info = new FileInfo(file);
-                SKBitmap SKBitmap = SKBitmap.Decode(file);
+                foreach (ZipEntry entry in archive)
+                {
+                    string name = entry.Name;
+                    var zipEntryStream = archive.GetInputStream(entry);
+                    using (MemoryStream s = new MemoryStream())
+                    {
+                        zipEntryStream.CopyTo(s);
+                        byte[] arr = ToByteArray(s);
 
-
-                GetWeaponPNG[info.Name.Replace(".png", "")] = SKBitmap;
-
+                        SKBitmap = SKBitmap.Decode(arr);
+                        dict[name.Replace(".png", "")] = SKBitmap;
+                    }
+                       
+                }
+                return dict;
             }
-            return GetWeaponPNG;
         }
     }
 

@@ -9,9 +9,12 @@ using System.Collections.Generic;
 using SkiaSharp;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Net;
 
 namespace FrameGenerator
 {
+   
     public class MainGenerator
     {
         private const int BottomRightStartX = 1065;
@@ -43,39 +46,38 @@ namespace FrameGenerator
         private int _lostHpCheckpoint = 0;
         private int _lostMpCheckpoint = 0;
         public static SKBitmap CharacterSKBitmap = new SKBitmap(32, 32);
-        
 
         public MainGenerator(string gameLocation = @"..\..\..\Extra")
         {
-
+            
+            gameLocation = "https://raw.githubusercontent.com/Aspectrus/DCSSExtraFiles/master";
             _characterdata = ReadFromFile.GetDictionaryFromFile(gameLocation + @"/racepng.txt");
             _features = ReadFromFile.GetDictionaryFromFile(gameLocation + @"/features.txt");
             _cloudtiles = ReadFromFile.GetDictionaryFromFile(gameLocation + @"/clouds.txt");
             _itemdata = ReadFromFile.GetDictionaryFromFile(gameLocation + @"/items.txt");
             _weapondata = ReadFromFile.GetDictionaryFromFile(gameLocation + @"/weapons.txt");
-
             _floorandwall = ReadFromFile.GetFloorAndWallNamesForDungeons(gameLocation + @"/tilefloor.txt");
             _floorandwallColor = ReadFromFile.GetFloorAndWallNamesForDungeons(gameLocation + @"/tilefloorColors.txt");
             _monsterdata = ReadFromFile.GetMonsterData(gameLocation + @"/mon-data.h", gameLocation + @"/monsteroverrides.txt");
             _namedMonsterOverrideData = ReadFromFile.GetNamedMonsterOverrideData(gameLocation + @"/namedmonsteroverrides.txt");
+            _alldngnpng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/dngn.zip");
+            _floorpng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/floor.zip");
+            _wallpng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/wall.zip");
+            _alleffects = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/effect.zip");
+            _miscallaneous = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/misc.zip");
+            _itempng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/item.zip");
 
-            _floorpng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/rltiles/dngn/floor");
-            _wallpng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/rltiles/dngn/wall");
-            _alldngnpng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/rltiles/dngn");
-            _alleffects = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/rltiles/effect");
-            _miscallaneous = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/rltiles/misc");
-            _itempng = ReadFromFile.GetSKBitmapDictionaryFromFolder(gameLocation + @"/rltiles/item");
-
-            _characterpng = ReadFromFile.GetCharacterPNG(gameLocation);
-            _monsterpng = ReadFromFile.GetMonsterPNG(gameLocation);
+            _characterpng = ReadFromFile.GetCharacterPNG(gameLocation+ @"/player.zip");
+            _monsterpng = ReadFromFile.GetMonsterPNG(gameLocation+ @"/mon.zip");
 
             _outOfSightCache = new Cacher();
-            _weaponpng = ReadFromFile.GetWeaponPNG(gameLocation);
+            _weaponpng = ReadFromFile.GetWeaponPNG(gameLocation+@"/weapon.zip");
+            
         }
 
         public SKBitmap GenerateImage(TerminalCharacter[,] chars, int consoleLevel = 1)
         {
-            //return DrawFrame(new Model());
+            return DrawFrame(new Model());
             if (chars != null)
             {
 

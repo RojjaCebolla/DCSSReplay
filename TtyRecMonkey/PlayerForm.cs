@@ -4,7 +4,7 @@
 
 using DisplayWindow;
 using FrameGenerator;
-using ICSharpCode.SharpZipLib.BZip2;
+//using ICSharpCode.SharpZipLib.BZip2;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -14,8 +14,10 @@ using System.Threading;
 using System.Windows.Forms;
 using TtyRecDecoder;
 using System.Drawing.Imaging;
-using ICSharpCode.SharpZipLib.GZip;
+//using ICSharpCode.SharpZipLib.GZip;
 using SkiaSharp.Views.Desktop;
+using ICSharpCode.SharpZipLib.BZip2;
+using ICSharpCode.SharpZipLib.GZip;
 
 namespace TtyRecMonkey
 {
@@ -132,7 +134,7 @@ namespace TtyRecMonkey
                 {
                     try
                     {
-                        BZip2.Decompress(streamCompressed, streamUncompressed, false);
+                      //  BZip2.Decompress(streamCompressed, streamUncompressed, false);
                     }
                     catch
                     {
@@ -144,7 +146,7 @@ namespace TtyRecMonkey
                 {
                     try
                     {
-                        GZip.Decompress(streamCompressed, streamUncompressed, false);
+                      //  GZip.Decompress(streamCompressed, streamUncompressed, false);
                     }
                     catch
                     {
